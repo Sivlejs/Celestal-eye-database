@@ -3,11 +3,12 @@
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(120) NOT NULL,
-    email       VARCHAR(255) NOT NULL UNIQUE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(120) NOT NULL,
+    email           VARCHAR(255) NOT NULL UNIQUE,
+    password_hash   VARCHAR(255),           -- nullable for seed/admin-created accounts
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Birth charts table

@@ -17,6 +17,11 @@ services:
           property: connectionString
       - key: NODE_ENV
         value: production
+      - key: JWT_SECRET
+        generateValue: true          # Render auto-generates a secure random value
+      - key: ALLOWED_ORIGINS
+        value: ""                    # Set to your app's URL after first deploy,
+                                     # e.g. https://celestal-eye.app
 
 databases:
   - name: celestal-eye-db
