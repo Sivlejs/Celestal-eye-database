@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celestal Eye — Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header>
+    <div class="header-inner">
+      <span class="logo">🌙 Celestal Eye</span>
+      <span class="subtitle">Admin Dashboard</span>
+    </div>
+  </header>
+
+  <!-- ── Stats row ───────────────────────────────────────────────────── -->
+  <main>
+    <section class="stats-row" id="stats">
+      <div class="stat-card">
+        <span class="stat-number" id="stat-users">—</span>
+        <span class="stat-label">Users</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-charts">—</span>
+        <span class="stat-label">Birth Charts</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-events">—</span>
+        <span class="stat-label">Celestial Events</span>
+      </div>
+    </section>
+
+    <!-- ── Tables ────────────────────────────────────────────────────── -->
+    <div class="panels">
+
+      <!-- Users -->
+      <section class="panel">
+        <h2>👤 Users</h2>
+        <div class="table-wrap">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Name</th><th>Email</th><th>Joined</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Birth Charts -->
+      <section class="panel">
+        <h2>✨ Birth Charts</h2>
+        <div class="table-wrap">
+          <table id="charts-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>User</th><th>Birth Date</th>
+                <th>Sun ☀️</th><th>Moon 🌕</th><th>Rising ⬆️</th><th>City</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Celestial Events -->
+      <section class="panel">
+        <h2>🪐 Celestial Events</h2>
+        <div class="table-wrap">
+          <table id="events-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Event</th><th>Type</th>
+                <th>Body</th><th>Date</th><th>Description</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div><!-- /.panels -->
+  </main>
+
+  <footer>
+    <p>Celestal Eye Database &mdash; <span id="footer-time"></span></p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
