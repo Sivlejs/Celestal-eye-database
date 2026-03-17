@@ -95,6 +95,63 @@ docker compose up --build     # starts Postgres, backend (:3000), Adminer (:8080
 | `JWT_SECRET` | ✅ | Long random string used to sign tokens |
 | `PORT` | — | HTTP port (default `3000`; Render sets this automatically) |
 | `ALLOWED_ORIGINS` | — | Comma-separated allowed CORS origins. Leave blank to allow all. |
+| `PAYPAL_CLIENT_ID` | — | PayPal Client ID for payments (see PayPal Setup below) |
+| `PAYPAL_CLIENT_SECRET` | — | PayPal Client Secret for server-side verification |
+| `PAYPAL_PLAN_ID` | — | PayPal subscription plan ID for premium subscriptions |
+
+---
+
+## PayPal Integration Setup
+
+The Celestal Eye app supports two payment options via PayPal:
+- **One-time payment** ($19.99) — Birth chart reading only
+- **Monthly subscription** ($9.99/month) — Daily guide + Nexus AI access
+
+### Setting Up PayPal
+
+1. **Create a PayPal Developer Account**
+   - Go to [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
+   - Log in with your PayPal account or create one
+
+2. **Create a Sandbox App (for testing)**
+   - Navigate to **Apps & Credentials**
+   - Click **Create App**
+   - Name it "Celestal Eye" (or similar)
+   - Copy the **Client ID** and **Secret**
+
+3. **Create a Subscription Plan (for Premium)**
+   - Go to [PayPal Billing Plans](https://www.paypal.com/billing/plans)
+   - Create a new subscription plan:
+     - **Product**: Create a product called "Celestal Eye Premium"
+     - **Plan name**: "Monthly Premium"
+     - **Billing cycle**: Monthly
+     - **Price**: $9.99 USD
+   - Copy the **Plan ID** (starts with `P-`)
+
+4. **Configure Environment Variables**
+   Add these to your `.env` file or Render environment:
+   ```
+   PAYPAL_CLIENT_ID=your_client_id_here
+   PAYPAL_CLIENT_SECRET=your_secret_here
+   PAYPAL_PLAN_ID=P-your_plan_id_here
+   ```
+
+5. **For Production**
+   - Switch from Sandbox to Live credentials
+   - Create a live subscription plan
+   - Update environment variables with live credentials
+
+### Payment Pages
+
+- **Pricing Page**: `/pricing.html` — Shows both payment options
+- **Birth Chart Page**: `/birth-chart.html` — Dedicated page for one-time birth chart purchase
+
+### Testing Payments
+
+Use PayPal sandbox accounts to test:
+1. Go to [Sandbox Accounts](https://developer.paypal.com/dashboard/accounts)
+2. Use the generated buyer/seller accounts for testing
+3. Payments in sandbox mode don't charge real money
 
 ---
 
@@ -267,6 +324,150 @@ Add a celestial event.
 
 ---
 
+### Payments — `/api/payments`
+
+#### `GET /api/payments/products`
+List available products and their prices.
+
+**Response `200`**
+```json
+{
+  "one_time": {
+    "birth_chart": {
+      "name": "Birth Chart Reading",
+      "description": "One-time purchase for your personalized astrological birth chart",
+      "price": "19.99",
+      "currency": "USD"
+    }
+  },
+  "subscription": {
+    "premium": {
+      "name": "Premium Subscription",
+      "description": "Monthly subscription for daily guide and Nexus AI access",
+      "price": "9.99",
+      "currency": "USD",
+      "interval": "MONTH"
+    }
+  }
+}
+```
+
+---
+
+#### `GET /api/payments/config`
+Get PayPal client ID for frontend SDK.
+
+**Response `200`**
+```json
+{
+  "clientId": "your-paypal-client-id",
+  "planId": "P-subscription-plan-id",
+  "currency": "USD"
+}
+```
+
+---
+
+#### `POST /api/payments/create-order` 🔒
+Create a one-time payment order.
+
+**Body**
+```json
+{ "product_type": "birth_chart" }
+```
+**Response `200`**
+```json
+{
+  "purchase_id": 1,
+  "product": { "name": "Birth Chart Reading", "price": "19.99" },
+  "amount": "19.99",
+  "currency": "USD"
+}
+```
+
+---
+
+#### `POST /api/payments/capture-order` 🔒
+Capture payment after PayPal approval.
+
+**Body**
+```json
+{
+  "purchase_id": 1,
+  "paypal_order_id": "PAYPAL_ORDER_ID"
+}
+```
+**Response `200`**
+```json
+{
+  "success": true,
+  "purchase": { "id": 1, "status": "completed", "..." },
+  "message": "Payment completed successfully!"
+}
+```
+
+---
+
+#### `POST /api/payments/create-subscription` 🔒
+Start a subscription process.
+
+**Response `200`**
+```json
+{
+  "subscription_id": 1,
+  "plan": { "name": "Premium Subscription", "price": "9.99" }
+}
+```
+
+---
+
+#### `POST /api/payments/activate-subscription` 🔒
+Activate subscription after PayPal approval.
+
+**Body**
+```json
+{
+  "subscription_id": 1,
+  "paypal_subscription_id": "I-SUBSCRIPTION_ID"
+}
+```
+**Response `200`**
+```json
+{
+  "success": true,
+  "subscription": { "id": 1, "status": "active", "..." },
+  "message": "Subscription activated!"
+}
+```
+
+---
+
+#### `GET /api/payments/access` 🔒
+Check user's access level based on purchases/subscriptions.
+
+**Response `200`**
+```json
+{
+  "hasBirthChartAccess": true,
+  "hasDailyGuideAccess": false,
+  "hasNexusAIAccess": false,
+  "isPremium": false
+}
+```
+
+---
+
+#### `GET /api/payments/my-purchases` 🔒
+Get user's purchase history.
+
+#### `GET /api/payments/my-subscription` 🔒
+Get user's current subscription status.
+
+#### `POST /api/payments/cancel-subscription` 🔒
+Cancel active subscription.
+
+---
+
 ### Health check
 
 `GET /health` → `{ "status": "ok", "timestamp": "…" }`  
@@ -284,6 +485,8 @@ The database tracks everything needed for the Celestal Eye app:
 | **birth_charts** | Birth chart data | `user_id` (FK), `birth_date`, `birth_time`, location, zodiac signs, `chart_data` (JSONB) |
 | **chart_readings** | Interpretations | `birth_chart_id` (FK), `reading_type`, `content` |
 | **celestial_events** | Planetary events | `event_name`, `event_type`, `celestial_body`, `event_date` |
+| **subscriptions** | Monthly subscriptions | `user_id` (FK), `paypal_subscription_id`, `plan_type`, `status` |
+| **purchases** | One-time purchases | `user_id` (FK), `paypal_order_id`, `product_type`, `amount`, `status` |
 
 ### Detailed Schema
 

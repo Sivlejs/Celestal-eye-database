@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celestal Eye — Pricing</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/pricing.css" />
+</head>
+<body>
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">🌙 Celestal Eye</a>
+      <nav class="nav-links">
+        <a href="/">Dashboard</a>
+        <a href="/pricing.html" class="active">Pricing</a>
+        <a href="/birth-chart.html">Birth Chart</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="pricing-page">
+    <!-- ── Hero Section ─────────────────────────────────────────────── -->
+    <section class="hero">
+      <h1>✨ Unlock Your Cosmic Journey</h1>
+      <p class="hero-subtitle">Choose the perfect plan to discover your celestial insights</p>
+    </section>
+
+    <!-- ── Pricing Cards ────────────────────────────────────────────── -->
+    <section class="pricing-cards">
+      
+      <!-- One-Time: Birth Chart -->
+      <div class="pricing-card">
+        <div class="card-header">
+          <span class="card-icon">🌟</span>
+          <h2>Birth Chart</h2>
+          <p class="card-tagline">One-Time Purchase</p>
+        </div>
+        <div class="card-price">
+          <span class="price">$19.99</span>
+          <span class="price-period">one time</span>
+        </div>
+        <ul class="card-features">
+          <li>✓ Complete birth chart calculation</li>
+          <li>✓ Sun, Moon, and Rising sign analysis</li>
+          <li>✓ Planetary positions & aspects</li>
+          <li>✓ Detailed natal chart interpretation</li>
+          <li>✓ Downloadable PDF report</li>
+          <li class="disabled">✗ Daily celestial guide</li>
+          <li class="disabled">✗ Nexus AI conversations</li>
+        </ul>
+        <div class="card-action">
+          <button id="buy-chart-btn" class="btn btn-secondary">
+            Get Your Birth Chart
+          </button>
+        </div>
+      </div>
+
+      <!-- Subscription: Premium -->
+      <div class="pricing-card featured">
+        <div class="popular-badge">Most Popular</div>
+        <div class="card-header">
+          <span class="card-icon">🔮</span>
+          <h2>Premium</h2>
+          <p class="card-tagline">Monthly Subscription</p>
+        </div>
+        <div class="card-price">
+          <span class="price">$9.99</span>
+          <span class="price-period">/month</span>
+        </div>
+        <ul class="card-features">
+          <li>✓ Everything in Birth Chart</li>
+          <li>✓ Daily personalized celestial guide</li>
+          <li>✓ Unlimited Nexus AI conversations</li>
+          <li>✓ Transit alerts & notifications</li>
+          <li>✓ Compatibility readings</li>
+          <li>✓ Priority support</li>
+          <li>✓ Cancel anytime</li>
+        </ul>
+        <div class="card-action">
+          <button id="subscribe-btn" class="btn btn-primary">
+            Start Premium Subscription
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── Features Comparison ──────────────────────────────────────── -->
+    <section class="features-section">
+      <h2>What's Included</h2>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <span class="feature-icon">☀️</span>
+          <h3>Birth Chart Reading</h3>
+          <p>Get your complete astrological birth chart with detailed interpretations of your Sun, Moon, and Rising signs.</p>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📅</span>
+          <h3>Daily Guide</h3>
+          <p>Receive personalized daily insights based on current planetary transits and how they affect your chart.</p>
+          <span class="premium-badge">Premium Only</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🤖</span>
+          <h3>Nexus AI</h3>
+          <p>Chat with our intelligent AI assistant to explore deeper meanings in your chart and get personalized guidance.</p>
+          <span class="premium-badge">Premium Only</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Auth Required Message ────────────────────────────────────── -->
+    <div id="auth-message" class="auth-message hidden">
+      <p>Please <a href="#" id="login-link">log in</a> or <a href="#" id="register-link">create an account</a> to make a purchase.</p>
+    </div>
+
+    <!-- ── PayPal Container ─────────────────────────────────────────── -->
+    <div id="paypal-container" class="paypal-container hidden">
+      <div class="paypal-modal">
+        <button class="close-modal" id="close-paypal">&times;</button>
+        <h3 id="paypal-title">Complete Your Purchase</h3>
+        <p id="paypal-description"></p>
+        <div id="paypal-button-container"></div>
+      </div>
+    </div>
+
+    <!-- ── Success Message ──────────────────────────────────────────── -->
+    <div id="success-message" class="success-message hidden">
+      <div class="success-content">
+        <span class="success-icon">✨</span>
+        <h3 id="success-title">Payment Successful!</h3>
+        <p id="success-text"></p>
+        <a href="/" class="btn btn-primary">Go to Dashboard</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Celestal Eye &mdash; Your Cosmic Guide &mdash; <span id="footer-time"></span></p>
+  </footer>
+
+  <!-- PayPal SDK will be loaded dynamically -->
+  <script src="/js/pricing.js"></script>
+</body>
+</html>
