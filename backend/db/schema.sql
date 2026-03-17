@@ -49,10 +49,40 @@ CREATE TABLE IF NOT EXISTS chart_readings (
     generated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Subscriptions table (for monthly subscriptions via PayPal)
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id                  SERIAL PRIMARY KEY,
+    user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    paypal_subscription_id VARCHAR(255) UNIQUE,
+    plan_type           VARCHAR(60) NOT NULL DEFAULT 'premium', -- 'premium' for daily guide + Nexus AI
+    status              VARCHAR(60) NOT NULL DEFAULT 'pending', -- 'pending', 'active', 'cancelled', 'expired'
+    start_date          TIMESTAMPTZ,
+    end_date            TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Purchases table (for one-time payments via PayPal)
+CREATE TABLE IF NOT EXISTS purchases (
+    id                  SERIAL PRIMARY KEY,
+    user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    paypal_order_id     VARCHAR(255) UNIQUE,
+    product_type        VARCHAR(60) NOT NULL, -- 'birth_chart'
+    amount              NUMERIC(10, 2) NOT NULL,
+    currency            VARCHAR(10) NOT NULL DEFAULT 'USD',
+    status              VARCHAR(60) NOT NULL DEFAULT 'pending', -- 'pending', 'completed', 'refunded'
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Indexes for common lookups
 CREATE INDEX IF NOT EXISTS idx_birth_charts_user_id  ON birth_charts(user_id);
 CREATE INDEX IF NOT EXISTS idx_chart_readings_chart  ON chart_readings(birth_chart_id);
 CREATE INDEX IF NOT EXISTS idx_celestial_events_date ON celestial_events(event_date);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status  ON subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_purchases_user_id     ON purchases(user_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_status      ON purchases(status);
 
 -- Auto-update updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -69,4 +99,12 @@ CREATE OR REPLACE TRIGGER trg_users_updated_at
 
 CREATE OR REPLACE TRIGGER trg_birth_charts_updated_at
     BEFORE UPDATE ON birth_charts
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE OR REPLACE TRIGGER trg_subscriptions_updated_at
+    BEFORE UPDATE ON subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE OR REPLACE TRIGGER trg_purchases_updated_at
+    BEFORE UPDATE ON purchases
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

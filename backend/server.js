@@ -6,10 +6,11 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const db = require('./db');
-const authRouter   = require('./routes/auth');
-const usersRouter  = require('./routes/users');
-const chartsRouter = require('./routes/charts');
-const eventsRouter = require('./routes/events');
+const authRouter     = require('./routes/auth');
+const usersRouter    = require('./routes/users');
+const chartsRouter   = require('./routes/charts');
+const eventsRouter   = require('./routes/events');
+const paymentsRouter = require('./routes/payments');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -42,16 +43,17 @@ app.use(cors({
 }));
 
 // ── Security & parsing middleware ─────────────────────────────────────────────
-// CSP allows only same-origin resources (dashboard JS/CSS are external files)
+// CSP allows same-origin resources plus PayPal SDK for payments
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'"],
-      styleSrc:    ["'self'"],
-      connectSrc:  ["'self'"],
-      imgSrc:      ["'self'", 'data:'],
+      scriptSrc:   ["'self'", 'https://www.paypal.com', 'https://www.paypalobjects.com'],
+      styleSrc:    ["'self'", "'unsafe-inline'"],
+      connectSrc:  ["'self'", 'https://www.paypal.com', 'https://www.sandbox.paypal.com'],
+      imgSrc:      ["'self'", 'data:', 'https://www.paypalobjects.com', 'https://t.paypal.com'],
       fontSrc:     ["'self'"],
+      frameSrc:    ["'self'", 'https://www.paypal.com', 'https://www.sandbox.paypal.com'],
       objectSrc:   ["'none'"],
       frameAncestors: ["'none'"],
     },
@@ -72,10 +74,11 @@ app.use('/api', rateLimit({
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',   authRouter);
-app.use('/api/users',  usersRouter);
-app.use('/api/charts', chartsRouter);
-app.use('/api/events', eventsRouter);
+app.use('/api/auth',     authRouter);
+app.use('/api/users',    usersRouter);
+app.use('/api/charts',   chartsRouter);
+app.use('/api/events',   eventsRouter);
+app.use('/api/payments', paymentsRouter);
 
 // ── Health check (required by Render) ────────────────────────────────────────
 app.get('/health', (_req, res) => {
