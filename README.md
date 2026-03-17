@@ -1,6 +1,15 @@
 # Celestal-eye-database
 The database for the birth chart app
 
+## Database Status 🗄️
+
+✅ **Database is deployed and connected on Render.com**
+
+- **PGHero Dashboard**: https://pghero-dpg-d6r4ld6a2pns73aak9s0-a.onrender.com/
+- Tables auto-created on startup: `users`, `birth_charts`, `chart_readings`, `celestial_events`
+
+---
+
 # Celestal Eye — Backend
 
 Full backend for the **Celestal Eye** birth chart app.  
@@ -267,12 +276,80 @@ Used by Render to confirm the service is running.
 
 ## Database schema
 
+The database tracks everything needed for the Celestal Eye app:
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **users** | User accounts | `id`, `name`, `email`, `password_hash`, timestamps |
+| **birth_charts** | Birth chart data | `user_id` (FK), `birth_date`, `birth_time`, location, zodiac signs, `chart_data` (JSONB) |
+| **chart_readings** | Interpretations | `birth_chart_id` (FK), `reading_type`, `content` |
+| **celestial_events** | Planetary events | `event_name`, `event_type`, `celestial_body`, `event_date` |
+
+### Detailed Schema
+
+```sql
+-- Users table (stores email, name, encrypted passwords)
+users (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(120) NOT NULL,
+    email           VARCHAR(255) NOT NULL UNIQUE,
+    password_hash   VARCHAR(255),           -- bcrypt hashed
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+)
+
+-- Birth charts linked to users
+birth_charts (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    birth_date      DATE NOT NULL,
+    birth_time      TIME,
+    birth_city      VARCHAR(120),
+    birth_country   VARCHAR(80),
+    latitude        NUMERIC(9, 6),
+    longitude       NUMERIC(9, 6),
+    sun_sign        VARCHAR(30),
+    moon_sign       VARCHAR(30),
+    rising_sign     VARCHAR(30),
+    chart_data      JSONB,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+)
+
+-- Readings/interpretations for charts
+chart_readings (
+    id              SERIAL PRIMARY KEY,
+    birth_chart_id  INTEGER REFERENCES birth_charts(id) ON DELETE CASCADE,
+    reading_type    VARCHAR(60) NOT NULL,   -- 'natal', 'transit', 'solar_return'
+    content         TEXT NOT NULL,
+    generated_at    TIMESTAMPTZ DEFAULT NOW()
+)
+
+-- Celestial events (retrogrades, eclipses, etc.)
+celestial_events (
+    id              SERIAL PRIMARY KEY,
+    event_name      VARCHAR(120) NOT NULL,
+    event_type      VARCHAR(60),            -- 'retrograde', 'eclipse', 'transit'
+    celestial_body  VARCHAR(60),            -- 'Mercury', 'Venus', 'Moon'
+    event_date      TIMESTAMPTZ NOT NULL,
+    description     TEXT,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+)
 ```
-users               id, name, email, password_hash, created_at, updated_at
-birth_charts        id, user_id→users, birth_date, birth_time, birth_city,
-                    birth_country, latitude, longitude, sun_sign, moon_sign,
-                    rising_sign, chart_data (JSONB), created_at, updated_at
-chart_readings      id, birth_chart_id→birth_charts, reading_type, content, generated_at
-celestial_events    id, event_name, event_type, celestial_body, event_date, description, created_at
-```
+
+---
+
+## Verifying Your Database
+
+To verify your database is working on Render:
+
+1. **Check the health endpoint**:
+   ```bash
+   curl https://<your-service>.onrender.com/health
+   # Should return: { "status": "ok", "timestamp": "..." }
+   ```
+
+2. **View the dashboard**: Visit your service URL to see the admin dashboard with live data.
+
+3. **Monitor with PGHero**: Access PGHero at your dashboard URL to view queries, indexes, and database health.
 
