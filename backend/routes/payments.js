@@ -281,50 +281,83 @@ router.get('/access', requireAuth, async (req, res, next) => {
 });
 
 // ── PayPal Webhook — Handle subscription events from PayPal ──────────────────
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res, next) => {
-  // PayPal sends webhook events for subscription status changes
-  // In production, verify the webhook signature using PayPal SDK
-  
+// IMPORTANT: In production, you MUST verify webhook signatures using the PayPal SDK
+// See: https://developer.paypal.com/docs/api/webhooks/v1/#verify-webhook-signature
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const eventType = event.event_type;
+    const resourceId = event.resource?.id;
+    const webhookId = event.id;
     
-    console.log('PayPal Webhook Event:', eventType);
+    // Log webhook event for audit trail (structured logging)
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      type: 'paypal_webhook',
+      eventType,
+      webhookId,
+      resourceId: resourceId || 'unknown'
+    };
+    console.log('PayPal Webhook:', JSON.stringify(logEntry));
+
+    // Validate required fields
+    if (!eventType || !resourceId) {
+      console.warn('PayPal Webhook: Missing required fields', logEntry);
+      return res.status(400).json({ error: 'Invalid webhook payload' });
+    }
+
+    // SECURITY NOTE: In production, verify the webhook signature before processing
+    // This requires the PAYPAL_WEBHOOK_ID environment variable
+    // const webhookIdEnv = process.env.PAYPAL_WEBHOOK_ID;
+    // if (webhookIdEnv) {
+    //   // Verify signature using PayPal SDK
+    //   // If verification fails, return 401
+    // }
     
     switch (eventType) {
       case 'BILLING.SUBSCRIPTION.CANCELLED':
       case 'BILLING.SUBSCRIPTION.SUSPENDED':
       case 'BILLING.SUBSCRIPTION.EXPIRED':
-        const subscriptionId = event.resource?.id;
-        if (subscriptionId) {
-          await db.query(
-            `UPDATE subscriptions 
-             SET status = 'cancelled', end_date = NOW(), updated_at = NOW()
-             WHERE paypal_subscription_id = $1`,
-            [subscriptionId]
-          );
-        }
+        const result = await db.query(
+          `UPDATE subscriptions 
+           SET status = 'cancelled', end_date = NOW(), updated_at = NOW()
+           WHERE paypal_subscription_id = $1
+           RETURNING id`,
+          [resourceId]
+        );
+        console.log('PayPal Webhook: Subscription cancelled', { 
+          resourceId, 
+          affected: result.rowCount 
+        });
         break;
         
       case 'BILLING.SUBSCRIPTION.ACTIVATED':
       case 'BILLING.SUBSCRIPTION.RENEWED':
-        // Subscription renewed/activated
-        const renewedId = event.resource?.id;
-        if (renewedId) {
-          await db.query(
-            `UPDATE subscriptions 
-             SET status = 'active', updated_at = NOW()
-             WHERE paypal_subscription_id = $1`,
-            [renewedId]
-          );
-        }
+        const renewResult = await db.query(
+          `UPDATE subscriptions 
+           SET status = 'active', updated_at = NOW()
+           WHERE paypal_subscription_id = $1
+           RETURNING id`,
+          [resourceId]
+        );
+        console.log('PayPal Webhook: Subscription activated/renewed', { 
+          resourceId, 
+          affected: renewResult.rowCount 
+        });
         break;
+        
+      default:
+        console.log('PayPal Webhook: Unhandled event type', { eventType });
     }
     
     res.json({ received: true });
   } catch (err) {
-    console.error('Webhook error:', err);
-    res.status(400).json({ error: 'Webhook processing failed' });
+    console.error('PayPal Webhook Error:', {
+      message: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ error: 'Internal server error processing webhook' });
   }
 });
 

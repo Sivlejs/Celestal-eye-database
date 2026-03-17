@@ -57,6 +57,11 @@
     }
   }
 
+  // Validate PayPal client ID format (alphanumeric, hyphens, underscores only)
+  function isValidPayPalClientId(clientId) {
+    return /^[A-Za-z0-9_-]+$/.test(clientId);
+  }
+
   function loadPayPalScript() {
     return new Promise((resolve, reject) => {
       if (paypalScriptLoaded) {
@@ -64,8 +69,13 @@
         return;
       }
       
+      if (!isValidPayPalClientId(paypalClientId)) {
+        reject(new Error('Invalid PayPal client ID format'));
+        return;
+      }
+      
       const script = document.createElement('script');
-      script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=USD&intent=capture`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=USD&intent=capture`;
       script.onload = () => {
         paypalScriptLoaded = true;
         resolve();
@@ -73,6 +83,21 @@
       script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
       document.head.appendChild(script);
     });
+  }
+
+  // Show error in a styled element instead of browser alert
+  function showError(title, message) {
+    paypalButtonContainer.innerHTML = `
+      <div style="text-align: center; padding: 1rem;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+        <h4 style="color: var(--gold); margin-bottom: 0.5rem;">${title}</h4>
+        <p style="color: var(--muted); font-size: 0.9rem;">${message}</p>
+        <button onclick="this.closest('.paypal-modal').querySelector('.close-modal').click()" 
+                style="margin-top: 1rem; padding: 0.5rem 1.5rem; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Try Again
+        </button>
+      </div>
+    `;
   }
 
   // ── Payment Flow ─────────────────────────────────────────────────────────────
@@ -154,7 +179,7 @@
       
       onError: function(err) {
         console.error('PayPal error:', err);
-        alert('Payment failed. Please try again.');
+        showError('Payment Failed', 'There was an issue processing your payment. Please check your payment details and try again.');
       },
       
       onCancel: function() {
